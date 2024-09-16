@@ -1,7 +1,7 @@
 from data import BOT_TOKEN
 import requests
 import time
-
+from call import start
 TOKEN = BOT_TOKEN
 API_URL = f'https://api.telegram.org/bot{TOKEN}'
 
@@ -66,9 +66,7 @@ def main():
                         user_id = get_user_id_by_username(user_mention, chat_id)
                         if user_id:
                             try:
-                                for i in range(0, 20):
-                                    time.sleep(1)
-                                    send_message(user_id, 'Доброе утро! Время просыпаться!')
+                                start(f'@{user_mention}')
                                 # Уведомление об успешной отправке в исходный чат
                                 send_message(chat_id, f"Будим @{user_mention}!")
                             except Exception as e:
