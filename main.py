@@ -1,7 +1,7 @@
-from data import BOT_TOKEN
+from data import BOT_TOKEN,user1,user2
 import requests
 import time
-from call import start
+from call import start, create_window_chat,url_Waaanther,url_pr1cechart,open_windows
 TOKEN = BOT_TOKEN
 API_URL = f'https://api.telegram.org/bot{TOKEN}'
 
@@ -49,6 +49,7 @@ def get_user_id_by_username(username, chat_id):
     return None
 
 def main():
+    # open_windows()
     offset = None
     while True:
         updates = get_updates(offset)
@@ -66,7 +67,7 @@ def main():
                         user_id = get_user_id_by_username(user_mention, chat_id)
                         if user_id:
                             try:
-                                start(f'@{user_mention}')
+                                start(user_mention)
                                 # Уведомление об успешной отправке в исходный чат
                                 send_message(chat_id, f"Будим @{user_mention}!")
                             except Exception as e:

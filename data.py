@@ -1,1 +1,7 @@
 BOT_TOKEN = '7518162847:AAFSzaEpU6YgqKOUxNj7Qk3jHgBtnQHKJRs'
+user1 = 'Waaanther'
+user2 = 'pr1cechart'
+user3 = ''
+user4 = ''
+user5 = ''
+user6 = ''

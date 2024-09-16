@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager as CDM
+from concurrent.futures import ThreadPoolExecutor
 import time
 import pickle
 import os
@@ -126,17 +127,17 @@ def login_tg():
     driver.quit()
 
 def start(name: str):
-    if name == '@pr1cechart':
+    if name == 'pr1cechart':
         call(url_pr1cechart)
-    elif name == '@Waaanther':
+    elif name == 'Waaanther':
         call(url_Waaanther)
-    elif name == '@lekhsak':
+    elif name == 'lekhsak':
         call(url_lekhsak)
-    elif name == '@lpacev1ch':
+    elif name == 'lpacev1ch':
         call(url_lpacev1ch)
-    elif name == '@akkkeyjin':
+    elif name == 'akkkeyjin':
         call(url_akkkeyjin)
-    elif name == '@ifvck1ngh8u':
+    elif name == 'ifvck1ngh8u':
         call(url_ifvck1ngh8u)
 
 def call(chat_url: str):
@@ -181,8 +182,45 @@ def call(chat_url: str):
             print(f'err = {err1}')
         # return f'не успела догрузиться кнопка звонка, пробуй еще раз (err={err})'
     print('Звоним!')    
-
-    input('some to exit')
+    time.sleep(5)
+    # input('some to exit')
     driver.quit()
 
+def create_window_chat(name:str , chat_url:str):
+    try:
+        driver = webdriver.Chrome(service= Service(CDM().install()),
+                          options=chrome_options,
+                          )
+    except Exception as err:
+        print(f"cant connect, err {err}")
+        return
+    time.sleep(5)
+    print(f'connected {driver}')
+    driver.implicitly_wait(5)
+    url='https://web.telegram.org/'
+    driver.get(url)
+    time.sleep(5)
+
+    load_storage(driver, f'local_storage_{name}.pkl', 'localStorage')
+    load_storage(driver, f'session_storage_{name}.pkl', 'sessionStorage')
+    driver.get(chat_url)
+    time.sleep(2)
     
+    try: 
+        driver.find_element(by=By.XPATH, value = '//*[@id="portals"]/div[1]/div/div/div[2]/div[2]/div/button').click()
+    except Exception as err:
+        print(f"cant find button 'smthg went wrong', err: {err}")
+    
+def open_windows():
+    chats = [
+    ("user2", "url_Waaanther"),
+    ("user2", "url_pr1cechart"),
+    ]
+
+    # Запуск нескольких окон одновременно с использованием ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=len(chats)) as executor:
+        futures = [executor.submit(create_window_chat, name, chat_url) for name, chat_url in chats]
+
+    # Ждём завершения всех задач
+    for future in futures:
+        future.result()
