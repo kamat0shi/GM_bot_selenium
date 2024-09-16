@@ -1,7 +1,7 @@
 from data import BOT_TOKEN,user1,user2
 import requests
 import time
-from call import start, create_window_chat,url_Waaanther,url_pr1cechart,open_windows
+from call import start
 TOKEN = BOT_TOKEN
 API_URL = f'https://api.telegram.org/bot{TOKEN}'
 
@@ -67,8 +67,9 @@ def main():
                         user_id = get_user_id_by_username(user_mention, chat_id)
                         if user_id:
                             try:
-                                start(user_mention)
-                                # Уведомление об успешной отправке в исходный чат
+                                print(start(user_mention))
+                                    # send_message(chat_id, f"что то не так, пробуй еще раз")
+                                # else:
                                 send_message(chat_id, f"Будим @{user_mention}!")
                             except Exception as e:
                                 # Сообщение в исходный чат, если возникла ошибка

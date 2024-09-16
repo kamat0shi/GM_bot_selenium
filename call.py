@@ -3,17 +3,19 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager as CDM
-from concurrent.futures import ThreadPoolExecutor
 import time
 import pickle
 import os
+import time
+
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 chrome_options = Options()
 # chrome_options.add_argument("--headless")  # Запуск без графического интерфейса
-# chrome_options.add_argument("--disable-gpu")  # Отключение GPU (для стабильности)
+# chrome_options.add_argument("--disable-gpu")  # Отключение GPU
 # chrome_options.add_argument("--no-sandbox")  # Для предотвращения ошибок в Linux
 # chrome_options.add_argument("--window-size=1920x1080")  # Размер окна
-ip_port = ''
 chrome_options.add_argument(f'user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15')
 
 cookie_path = 'my_cookies.dat'
@@ -40,11 +42,10 @@ def load_cookies(driver, path):
         with open(path, 'rb') as file:
             cookies = pickle.load(file)
             for cookie in cookies:
-                # Убедимся, что cookie имеет правильный домен и путь
                 if 'sameSite' in cookie:
                     del cookie['sameSite']
                 if 'expiry' in cookie:
-                    cookie['expiry'] = int(cookie['expiry'])  # Преобразуем значение в int
+                    cookie['expiry'] = int(cookie['expiry'])
                 driver.add_cookie(cookie)
 
 def save_storage(driver, path, storage_type='localStorage'):
@@ -61,65 +62,56 @@ def load_storage(driver, path, storage_type='localStorage'):
             for key, value in storage.items():
                 driver.execute_script(f"window.{storage_type}.setItem(arguments[0], arguments[1]);", key, value)
 
-
 def login_tg():
     try:
-        driver = webdriver.Chrome(service= Service(CDM().install()),
-                          options=chrome_options,
-                          )
+        driver = webdriver.Chrome(service=Service(CDM().install()), options=chrome_options)
     except Exception as err:
         print(f"cant connect, err {err}")
         return
     print(f'connected {driver}')
     driver.implicitly_wait(5)
-    url='https://web.telegram.org/'
+    url = 'https://web.telegram.org/'
     driver.get(url)
 
     if os.path.exists(cookie_path):
         print('Cookies already exist')
-        # load_cookies(driver, cookie_path)
-        # driver.refresh()  # Перезагрузка страницы после загрузки cookies
-        # time.sleep(2)
-        
-        # Загрузка localStorage и sessionStorage
         load_storage(driver, local_storage_path, 'localStorage')
         load_storage(driver, session_storage_path, 'sessionStorage')
-        # driver.refresh()  # Перезагрузка страницы для применения данных
         driver.get('https://web.telegram.org/a/#587365981')
         time.sleep(2)
     else:
         print('cookie is not writed')
         time.sleep(10)
-        driver.find_element(by=By.XPATH, value = '//*[@id="auth-pages"]/div/div[2]/div[3]/div/div[2]/button/div').click()
-        # driver.find_element(by=By.XPATH, value = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/div[1]/div[1]').send_keys('be')
-        # driver.find_element(by=By.XPATH, value = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/div[1]/div[3]/div/ul/li[20]/span[2]').click()
-        driver.find_element(by=By.XPATH, value = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/div[2]/div[1]').send_keys('447459399858')
-        driver.find_element(by=By.XPATH, value = '//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/button[1]/div').click()
+        driver.find_element(by=By.XPATH, value='//*[@id="auth-pages"]/div/div[2]/div[3]/div/div[2]/button/div').click()
+        driver.find_element(by=By.XPATH, value='//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/div[2]/div[1]').send_keys('447459399858')
+        driver.find_element(by=By.XPATH, value='//*[@id="auth-pages"]/div/div[2]/div[2]/div/div[3]/button[1]/div').click()
         
         input("write to save session")
         
-         # Сохранение cookies, localStorage и sessionStorage после успешного входа
         save_cookies(driver, cookie_path)
         save_storage(driver, local_storage_path, 'localStorage')
         save_storage(driver, session_storage_path, 'sessionStorage')
         print('Cookies, localStorage, and sessionStorage saved!')
 
-    # driver.refresh()
-    # driver.get('https://web.telegram.org/a/#587365981')
-    # driver.refresh()
-    # time.sleep(5)
-    # driver.find_element(by=By.XPATH, value = '//*[@id="MiddleColumn"]/div[4]/div[1]/div[3]/div/button[2]').click()
-    try: 
-        driver.find_element(by=By.XPATH, value = '//*[@id="portals"]/div[1]/div/div/div[2]/div[2]/div/button').click()
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//*[@id="portals"]/div[1]/div/div/div[2]/div[2]/div/button'))
+        ).click()
     except Exception as err:
         print(f"cant find button 'smthg went wrong', err: {err}")
 
-    driver.find_element(by=By.XPATH, value = '//*[@id="message-input-text"]/div[1]/div').click()
-    driver.find_element(by=By.XPATH, value = '//*[@id="editable-message-text"]').send_keys('test bota')  
-    time.sleep(2)  
-    driver.find_element(by=By.XPATH, value = '/html/body/div[2]/div/div[2]/div[4]/div[2]/div/div[2]/div[1]/button').click()   
-    # driver.find_element(by=By.XPATH, value = '/html/body/div[2]/div/div[2]/div[4]/div[2]/div/div[2]/div[1]/button').click()  
-    # driver.find_element(by=By.XPATH, value = '//*[@id="MiddleColumn"]/div[4]/div[2]/div/div[2]/div[1]/button').click()    
+    WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[@id="message-input-text"]/div[1]/div'))
+    ).click()
+    
+    message_input = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.XPATH, '//*[@id="editable-message-text"]'))
+    )
+    message_input.send_keys('test bota')  
+    
+    WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/div/div[2]/div[4]/div[2]/div/div[2]/div[1]/button'))
+    ).click()   
 
     print('Звоним Ромчику')    
 
@@ -130,7 +122,7 @@ def start(name: str):
     if name == 'pr1cechart':
         call(url_pr1cechart)
     elif name == 'Waaanther':
-        call(url_Waaanther)
+        print(call(url_Waaanther))
     elif name == 'lekhsak':
         call(url_lekhsak)
     elif name == 'lpacev1ch':
@@ -142,85 +134,36 @@ def start(name: str):
 
 def call(chat_url: str):
     try:
-        driver = webdriver.Chrome(service= Service(CDM().install()),
-                          options=chrome_options,
-                          )
+        driver = webdriver.Chrome(service=Service(CDM().install()), options=chrome_options)
     except Exception as err:
         print(f"cant connect, err {err}")
-        return
+        return False
     print(f'connected {driver}')
     driver.implicitly_wait(5)
-    url='https://web.telegram.org/'
+    url = 'https://web.telegram.org/'
     driver.get(url)
 
     load_storage(driver, local_storage_path_pr1cechart, 'localStorage')
     load_storage(driver, session_storage_path_pr1cechart, 'sessionStorage')
-    # driver.refresh()  # Перезагрузка страницы для применения данных
     driver.get(chat_url)
-    time.sleep(2)
     
-    try: 
-        driver.find_element(by=By.XPATH, value = '//*[@id="portals"]/div[1]/div/div/div[2]/div[2]/div/button').click()
+    try:
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, '//*[@id="portals"]/div[1]/div/div/div[2]/div[2]/div/button'))
+        ).click()
     except Exception as err:
         print(f"cant find button 'smthg went wrong', err: {err}")
-
-    time.sleep(3)
-    # input('smthng to next step')
-    # driver.find_element(by=By.XPATH, value = '//*[@id="message-input-text"]/div[1]/div').click()
-    # driver.find_element(by=By.XPATH, value = '//*[@id="editable-message-text"]').send_keys('test bota')  
-    # time.sleep(2)  
-    # driver.find_element(by=By.XPATH, value = '/html/body/div[2]/div/div[2]/div[4]/div[2]/div/div[2]/div[1]/button').click()   
-    # driver.find_element(by=By.XPATH, value = '/html/body/div[2]/div/div[2]/div[4]/div[2]/div/div[2]/div[1]/button').click()  
+    
     try:
-        driver.find_element(by=By.XPATH, value = '/html/body/div[2]/div/div[2]/div[4]/div[1]/div[2]/div/button[2]').click()    
+        WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable((By.XPATH, '/html/body/div[2]/div/div[2]/div[4]/div[1]/div[2]/div/button[2]'))
+        ).click()    
     except Exception as err:
         print('first timer for call button is timeout')
-        time.sleep(12)
-        try:
-            driver.find_element(by=By.XPATH, value = '//*[@id="portals"]/div[1]/div/div/div[2]/div[2]/div/button').click()
-        except Exception as err1:
-            print(f'err = {err1}')
-        # return f'не успела догрузиться кнопка звонка, пробуй еще раз (err={err})'
+
     print('Звоним!')    
-    time.sleep(5)
-    # input('some to exit')
+
+    time.sleep(30)
     driver.quit()
 
-def create_window_chat(name:str , chat_url:str):
-    try:
-        driver = webdriver.Chrome(service= Service(CDM().install()),
-                          options=chrome_options,
-                          )
-    except Exception as err:
-        print(f"cant connect, err {err}")
-        return
-    time.sleep(5)
-    print(f'connected {driver}')
-    driver.implicitly_wait(5)
-    url='https://web.telegram.org/'
-    driver.get(url)
-    time.sleep(5)
-
-    load_storage(driver, f'local_storage_{name}.pkl', 'localStorage')
-    load_storage(driver, f'session_storage_{name}.pkl', 'sessionStorage')
-    driver.get(chat_url)
-    time.sleep(2)
     
-    try: 
-        driver.find_element(by=By.XPATH, value = '//*[@id="portals"]/div[1]/div/div/div[2]/div[2]/div/button').click()
-    except Exception as err:
-        print(f"cant find button 'smthg went wrong', err: {err}")
-    
-def open_windows():
-    chats = [
-    ("user2", "url_Waaanther"),
-    ("user2", "url_pr1cechart"),
-    ]
-
-    # Запуск нескольких окон одновременно с использованием ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=len(chats)) as executor:
-        futures = [executor.submit(create_window_chat, name, chat_url) for name, chat_url in chats]
-
-    # Ждём завершения всех задач
-    for future in futures:
-        future.result()
